@@ -3,11 +3,11 @@ import numpy as np
 from functools import reduce
 from scipy.interpolate import make_interp_spline, BSpline
 
-from CFDSolvers.ConvectionDiffusionSolver import (
+from CFDSolver.ConvectionDiffusionSolver import (
     OneDimensionalConvectionDiffusionSystem as CDS,
 )
-from CFDSolvers.ConvectionDiffusionSolver import FlowProperties, DifferencingScheme
-from CFDSolvers.Tools import calc_error
+from CFDSolver.ConvectionDiffusionSolver import FlowProperties, DifferencingScheme
+from CFDSolver.Tools import calc_error
 
 import pdb
 
