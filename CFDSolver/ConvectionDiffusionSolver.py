@@ -1,6 +1,6 @@
-import numpy as np
+from math import expm1
 from enum import Enum
-from CFDSolver.Tools import TDMA
+from CFDSolver.Tools import solveTDM
 
 import pdb
 
@@ -48,8 +48,8 @@ class OneDimensionalConvectionDiffusionSystem:
         # Calculates analytical answer at node i of self.n - primarily to make code neater
         return (
             self.initial_phi_grid[0]
-            + np.expm1(self._constants * i / self.n * self.real_length)
-            / np.expm1(self._constants * self.real_length)
+            + expm1(self._constants * i / (self.n - 1) * self.real_length)
+            / expm1(self._constants * self.real_length)
             * self._delta
         )
 
@@ -69,27 +69,16 @@ class OneDimensionalConvectionDiffusionSystem:
         if diffusion_scheme != DifferencingScheme.CENTRAL:
             # In future could implement other differencing schemes on the diffusion element too
             raise NotImplementedError
-        # TODO: tidy up repetition of code here
         if convection_scheme == DifferencingScheme.CENTRAL:
             a_e = normalized_diffusion - 0.5 * normalized_flux
             a_w = normalized_diffusion + 0.5 * normalized_flux
             # Density and velocity constant so in a_p last term cancels itself
             a_p = a_e + a_w
-            a = [-1 * a_w] * (self.n - 1)
-            b = [a_p] * (self.n)
-            c = [-1 * a_e] * (self.n - 1)
-            d = [0] * (self.n)
-            return TDMA(a, b, c, self.initial_phi_grid, d)
         elif convection_scheme == DifferencingScheme.UPWIND:
             a_e = normalized_diffusion + max([-1 * normalized_flux, 0])
             a_w = normalized_diffusion + max([1 * normalized_flux, 0])
             # Density and velocity constant so in a_p last term cancels itself
             a_p = a_e + a_w
-            a = [-1 * a_w] * (self.n - 1)
-            b = [a_p] * (self.n)
-            c = [-1 * a_e] * (self.n - 1)
-            d = [0] * (self.n)
-            return TDMA(a, b, c, self.initial_phi_grid, d)
         elif convection_scheme == DifferencingScheme.POWER_LAW:
             a_e = normalized_diffusion * max(
                 [(1 - 0.1 * abs(normalized_flux / normalized_diffusion)) ** 5, 0]
@@ -99,11 +88,11 @@ class OneDimensionalConvectionDiffusionSystem:
             ) + max([1 * normalized_flux, 0])
             # Density and velocity constant so in a_p last term cancels itself
             a_p = a_e + a_w
-            a = [-1 * a_w] * (self.n - 1)
-            b = [a_p] * (self.n)
-            c = [-1 * a_e] * (self.n - 1)
-            d = [0] * (self.n)
-            return TDMA(a, b, c, self.initial_phi_grid, d)
         else:
             raise NotImplementedError
+        a = [-1 * a_w] * (self.n - 1)
+        b = [a_p] * (self.n)
+        c = [-1 * a_e] * (self.n - 1)
+        d = [0] * (self.n)
+        return solveTDM(a, b, c, self.initial_phi_grid, d)
 

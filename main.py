@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from functools import reduce
+from math import floor
 from scipy.interpolate import make_interp_spline, BSpline
 
 from CFDSolver.ConvectionDiffusionSolver import (
@@ -13,7 +13,7 @@ import pdb
 
 ### Create system
 length = 1  # in m
-grid_size = 0.1  # in m
+grid_size = 0.25  # in m
 scalars = FlowProperties(
     velocity=1
 )  # flow properties just specifying velocity, others default to 1
@@ -37,8 +37,10 @@ if __name__ == "__main__":
         print("Invalid parameters - using script defined values")
 
 # Declare and instantiate spacial and phi domain
-x = np.arange(0, length + grid_size, grid_size)
-phi_grid = np.zeros_like(x)
+x = list(
+    np.arange(0, length + grid_size, grid_size)
+)  # add grid_size as arange is a half open interval
+phi_grid = [0] * len(x)
 phi_grid[0] = 100
 phi_grid[-1] = 20
 
@@ -54,18 +56,20 @@ uw_sol = system.solve_numerically(convection_scheme=DifferencingScheme.UPWIND)
 uw_sol_error = round(calc_error(an_sol, uw_sol), 3)
 pl_sol = system.solve_numerically(convection_scheme=DifferencingScheme.POWER_LAW)
 pl_sol_error = round(calc_error(an_sol, pl_sol), 3)
-pdb.set_trace()
 
 
 ### Plot results for given parameters
 
 # Smooth out analytical solution for plotting
-x_smooth = np.linspace(x.min(), x.max(), 300)
+x_smooth = np.linspace(min(x), max(x), 300)
 spl = make_interp_spline(x, an_sol, k=3)
 an_sol_smooth = spl(x_smooth)
 
-plt.plot(x_smooth, an_sol_smooth, label="Analytical - Err {}%".format(an_sol_error))
-# plt.plot(x, cd_sol, "bo", label="Central Differencing - Err {}%".format(cd_sol_error))
+plt.plot(x, an_sol, "bo")
+plt.plot(
+    x_smooth, an_sol_smooth, label="Analytical(Splined) - Err {}%".format(an_sol_error)
+)
+plt.plot(x, cd_sol, "yx", label="Central Differencing - Err {}%".format(cd_sol_error))
 plt.plot(x, uw_sol, "ro", label="Upwind Differencing - Err {}%".format(uw_sol_error))
 plt.plot(x, pl_sol, "go", label="Power-law Differencing - Err {}%".format(pl_sol_error))
 
