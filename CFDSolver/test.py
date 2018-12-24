@@ -1,5 +1,5 @@
 import unittest
-from Tools import solveTDM
+from .Tools import solveTDM
 
 
 class TestTDMA(unittest.TestCase):
