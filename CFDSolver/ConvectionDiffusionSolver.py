@@ -2,11 +2,12 @@ from math import expm1
 from enum import Enum
 from CFDSolver.Tools import solveTDM
 
-import pdb
-
 """
 Future work:
 Implement for solving of velocities also
+Implement general dimensionality
+Implement for transport of scalars
+Would be cool to write a diff eqn string parser that then discretizes
 """
 
 
@@ -19,8 +20,9 @@ class DifferencingScheme(Enum):
 
 
 class FlowProperties:
-    # Object to store scalar values that are assumed constant throughout the domain
-    # default to 1 for density and diffusion - but we are required to vary velocity in exercise
+    """ Object to store scalar values that are assumed constant throughout the domain
+    default to 1 for density and diffusion - no default for velocity"""
+
     def __init__(
         self, velocity: float, diffusion_coefficient: float = 1, density: float = 1
     ):
@@ -30,6 +32,8 @@ class FlowProperties:
 
 
 class OneDimensionalConvectionDiffusionSystem:
+    """ Object to store system properties & BCs for solving by analytical & numerical methods """
+
     def __init__(self, initial_phi_grid, scalars: FlowProperties, real_length):
         # Store passed system in object and calculate useful quantities
         self.initial_phi_grid = initial_phi_grid
@@ -63,7 +67,7 @@ class OneDimensionalConvectionDiffusionSystem:
         convection_scheme: DifferencingScheme,
         diffusion_scheme: DifferencingScheme = DifferencingScheme.CENTRAL,
     ):
-        """Solve system numerically using a_p\*Phi_p = a_e\*Phi_e + a_w\*Phi_w"""
+        """Solve system numerically using a_p * Phi_p = a_e * Phi_e + a_w * Phi_w"""
         normalized_flux = self.scalars.density * self.scalars.velocity
         normalized_diffusion = self.scalars.diffusion_coefficient / self._grid_size
         if diffusion_scheme != DifferencingScheme.CENTRAL:

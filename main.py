@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from math import floor
+import time
 from scipy.interpolate import make_interp_spline, BSpline
 
 from CFDSolver.ConvectionDiffusionSolver import (
@@ -8,32 +8,24 @@ from CFDSolver.ConvectionDiffusionSolver import (
 from CFDSolver.ConvectionDiffusionSolver import FlowProperties, DifferencingScheme
 from CFDSolver.Tools import calc_error
 
-import pdb
+# Define system parameters - in SI units where applicable
+length = 1
+nodes = 5
+scalars = FlowProperties(velocity=1)
 
-### Create system
-length = 1  # in m
-nodes = 5  # in m
-scalars = FlowProperties(
-    velocity=1
-)  # flow properties just specifying velocity, others default to 1
-
-# Override if provided in command line
+# Override system parameters if provided in command line
+# In positional order: # of nodes, velocity, diffusion and density
 if __name__ == "__main__":
-    """
-    Provide cmd line args for # of nodes, velocity, diffusion and density
-    """
     import sys
 
     try:
         if 3 <= len(sys.argv) and len(sys.argv) <= 5:
             nodes = int(sys.argv[1])
-            scalars = FlowProperties(
-                *map(float, sys.argv[2:])
-            )  # flow properties just specifying velocity, others default to 1
+            scalars = FlowProperties(*map(float, sys.argv[2:]))
         else:
             raise IndexError
     except IndexError:
-        print("Invalid parameters - using script defined values")
+        print("Inappropriate # of arguments passed - using code defaults")
 
 # Declare and instantiate spacial and phi domain
 x = [x / nodes * length for x in range(0, nodes)]
@@ -44,34 +36,35 @@ phi_grid[-1] = 20
 # Create solver
 system = CDS(phi_grid, scalars, length)
 
-### Solve
+# Solve
 an_sol = system.solve_analytically()
 an_sol_error = round(calc_error(an_sol, an_sol), 3)
-cd_sol = system.solve_numerically(convection_scheme=DifferencingScheme.CENTRAL)
-cd_sol_error = round(calc_error(an_sol, cd_sol), 3)
-uw_sol = system.solve_numerically(convection_scheme=DifferencingScheme.UPWIND)
-uw_sol_error = round(calc_error(an_sol, uw_sol), 3)
-pl_sol = system.solve_numerically(convection_scheme=DifferencingScheme.POWER_LAW)
-pl_sol_error = round(calc_error(an_sol, pl_sol), 3)
-
-
-### Plot results for given parameters
+sol = dict()  # Dict of (solution,error,processing time)
+for scheme in DifferencingScheme:
+    start = round(time.perf_counter_ns() / 1000)
+    solution = system.solve_numerically(convection_scheme=scheme)
+    end = round(time.perf_counter_ns() / 1000)
+    sol[scheme.name] = (solution, round(calc_error(an_sol, solution), 3), end - start)
 
 # Smooth out analytical solution for plotting
 x_smooth = [x / 300 * length for x in range(0, 300)]
 spl = make_interp_spline(x, an_sol, k=3)
 an_sol_smooth = spl(x_smooth)
 
+# Display results
 plt.plot(x, an_sol, "bo")
 plt.plot(
     x_smooth, an_sol_smooth, label="Analytical(Splined) - Err {}%".format(an_sol_error)
 )
-plt.plot(x, cd_sol, "yo--", label="Central Differencing - Err {}%".format(cd_sol_error))
-plt.plot(x, uw_sol, "ro-", label="Upwind Differencing - Err {}%".format(uw_sol_error))
-plt.plot(
-    x, pl_sol, "go-.", label="Power-law Differencing - Err {}%".format(pl_sol_error)
-)
-
+for scheme in DifferencingScheme:
+    plt.plot(
+        x,
+        sol[scheme.name][0],
+        "o--",
+        label="{} {}us - Err {}%".format(
+            scheme.name.capitalize(), sol[scheme.name][2], sol[scheme.name][1]
+        ),
+    )
 plt.legend(loc="best")
 plt.title(
     u"U = {}, ∆X = {} \n Γ = {}, ρ = {}, N = {} \n Global Pe = {}, Local Pe = {}".format(
