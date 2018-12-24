@@ -15,7 +15,7 @@ def calc_error(real: list, calculated: list) -> float:
     return 100 / len(real) * cum_tot
 
 
-def solveTDM(a, b, c, x, d):
+def solveTDM(a, b, c, x, d) -> list:
     """ Use Tri-diagonal matrix algorithm to solve Ax=d
     
     Given lists containing coefficients of A: a_i, b_i, c_i.
@@ -26,7 +26,7 @@ def solveTDM(a, b, c, x, d):
     Takes only list inputs"""
     if len(a) != len(c) or len(a) + 1 != len(b) or len(d) != len(b):
         raise AttributeError("Not a Tri-diagonal matrix")
-    copy_x = x  # Don't want to change original grid
+    copy_x = list(x)  # Don't want to change original grid
     p = [0] * len(d)
     q = [0] * len(d)
     a = [0, *a]  # Needed to make a_i access correct element

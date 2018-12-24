@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from math import floor
 from scipy.interpolate import make_interp_spline, BSpline
 
@@ -13,7 +12,7 @@ import pdb
 
 ### Create system
 length = 1  # in m
-grid_size = 0.25  # in m
+nodes = 5  # in m
 scalars = FlowProperties(
     velocity=1
 )  # flow properties just specifying velocity, others default to 1
@@ -21,13 +20,13 @@ scalars = FlowProperties(
 # Override if provided in command line
 if __name__ == "__main__":
     """
-    Provide cmd line args for grid size, velocity, diffusion and density
+    Provide cmd line args for # of nodes, velocity, diffusion and density
     """
     import sys
 
     try:
         if 3 <= len(sys.argv) and len(sys.argv) <= 5:
-            grid_size = float(sys.argv[1])
+            nodes = int(sys.argv[1])
             scalars = FlowProperties(
                 *map(float, sys.argv[2:])
             )  # flow properties just specifying velocity, others default to 1
@@ -37,9 +36,7 @@ if __name__ == "__main__":
         print("Invalid parameters - using script defined values")
 
 # Declare and instantiate spacial and phi domain
-x = list(
-    np.arange(0, length + grid_size, grid_size)
-)  # add grid_size as arange is a half open interval
+x = [x / nodes * length for x in range(0, nodes)]
 phi_grid = [0] * len(x)
 phi_grid[0] = 100
 phi_grid[-1] = 20
@@ -61,7 +58,7 @@ pl_sol_error = round(calc_error(an_sol, pl_sol), 3)
 ### Plot results for given parameters
 
 # Smooth out analytical solution for plotting
-x_smooth = np.linspace(min(x), max(x), 300)
+x_smooth = [x / 300 * length for x in range(0, 300)]
 spl = make_interp_spline(x, an_sol, k=3)
 an_sol_smooth = spl(x_smooth)
 
@@ -69,20 +66,26 @@ plt.plot(x, an_sol, "bo")
 plt.plot(
     x_smooth, an_sol_smooth, label="Analytical(Splined) - Err {}%".format(an_sol_error)
 )
-plt.plot(x, cd_sol, "yx", label="Central Differencing - Err {}%".format(cd_sol_error))
-plt.plot(x, uw_sol, "ro", label="Upwind Differencing - Err {}%".format(uw_sol_error))
-plt.plot(x, pl_sol, "go", label="Power-law Differencing - Err {}%".format(pl_sol_error))
+plt.plot(x, cd_sol, "yo--", label="Central Differencing - Err {}%".format(cd_sol_error))
+plt.plot(x, uw_sol, "ro-", label="Upwind Differencing - Err {}%".format(uw_sol_error))
+plt.plot(
+    x, pl_sol, "go-.", label="Power-law Differencing - Err {}%".format(pl_sol_error)
+)
 
 plt.legend(loc="best")
 plt.title(
     u"U = {}, ∆X = {} \n Γ = {}, ρ = {}, N = {} \n Global Pe = {}, Local Pe = {}".format(
         scalars.velocity,
-        grid_size,
+        length / nodes,
         scalars.diffusion_coefficient,
         scalars.density,
         len(phi_grid),
         scalars.density * scalars.velocity * length / scalars.diffusion_coefficient,
-        scalars.density * scalars.velocity * grid_size / scalars.diffusion_coefficient,
+        scalars.density
+        * scalars.velocity
+        * length
+        / nodes
+        / scalars.diffusion_coefficient,
     )
 )
 plt.xlabel("X\nm")
