@@ -28,7 +28,7 @@ if __name__ == "__main__":
         print("Inappropriate # of arguments passed - using code defaults")
 
 # Declare and instantiate spacial and phi domain
-x = [x / nodes * length for x in range(0, nodes)]
+x = [x / (nodes-1) * length for x in range(0, nodes)]
 phi_grid = [0] * len(x)
 phi_grid[0] = 100
 phi_grid[-1] = 20

@@ -73,6 +73,7 @@ class OneDimensionalConvectionDiffusionSystem:
         diffusion_scheme: DifferencingScheme = DifferencingScheme.CENTRAL,
     ):
         """Solve system numerically using a_p * Phi_p = a_e * Phi_e + a_w * Phi_w"""
+        #TODO: Does b_0 and b_n need to change? We don't seem to use it anyway
         if diffusion_scheme != DifferencingScheme.CENTRAL:
             # In future could implement other differencing schemes on the diffusion element too
             raise NotImplementedError
@@ -101,5 +102,7 @@ class OneDimensionalConvectionDiffusionSystem:
         b = [a_p] * (self.n)
         c = [-1 * a_e] * (self.n - 1)
         d = [0] * (self.n)
+        b[0] = b[0] - a[0]
+        b[self.n -1 ] = b[self.n-1] - c[self.n-2]
         return solveTDM(a, b, c, self.initial_phi_grid, d)
 
