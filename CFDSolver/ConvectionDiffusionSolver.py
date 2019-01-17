@@ -26,7 +26,7 @@ class FlowProperties:
     default to 1 for density and diffusion - no default for velocity"""
 
     def __init__(
-        self, velocity: float, diffusion_coefficient: float = 0.5918, density: float = 1
+        self, velocity: float, diffusion_coefficient: float = 0.5918, density: float = 1.23
     ):
         self.density = density
         self.diffusion_coefficient = diffusion_coefficient
@@ -55,12 +55,19 @@ class OneDimensionalConvectionDiffusionSystem:
 
     def _sol(self, i):
         # Calculates analytical answer at node i of self.n - primarily to make code neater
-        return (
-            self.initial_phi_grid[0]
-            + expm1(self._constants * i / (self.n - 1) * self.real_length)
-            / expm1(self._constants * self.real_length)
-            * self._delta
-        )
+        if self.scalars.velocity != 0:
+            return (
+                self.initial_phi_grid[0]
+                + expm1(self._constants * i / (self.n - 1) * self.real_length)
+                / expm1(self._constants * self.real_length)
+                * self._delta
+            )
+        else:
+            #Plain ol' diffusion
+            return (
+                self.initial_phi_grid[0] + self._delta * i / (self.n - 1)
+            )
+        
 
     def solve_analytically(self):
         # Solve analytically for all nodes
@@ -73,7 +80,7 @@ class OneDimensionalConvectionDiffusionSystem:
         diffusion_scheme: DifferencingScheme = DifferencingScheme.CENTRAL,
     ):
         """Solve system numerically using a_p * Phi_p = a_e * Phi_e + a_w * Phi_w"""
-        #TODO: Does b_0 and b_n need to change? We don't seem to use it anyway
+        # TODO: Does b_0 and b_n need to change? We don't seem to use it anyway
         if diffusion_scheme != DifferencingScheme.CENTRAL:
             # In future could implement other differencing schemes on the diffusion element too
             raise NotImplementedError
@@ -103,6 +110,6 @@ class OneDimensionalConvectionDiffusionSystem:
         c = [-1 * a_e] * (self.n - 1)
         d = [0] * (self.n)
         b[0] = b[0] - a[0]
-        b[self.n -1 ] = b[self.n-1] - c[self.n-2]
+        b[self.n - 1] = b[self.n - 1] - c[self.n - 2]
         return solveTDM(a, b, c, self.initial_phi_grid, d)
 
