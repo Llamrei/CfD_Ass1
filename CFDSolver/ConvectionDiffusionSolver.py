@@ -56,12 +56,15 @@ class OneDimensionalConvectionDiffusionSystem:
     def _sol(self, i):
         # Calculates analytical answer at node i of self.n - primarily to make code neater
         if self.scalars.velocity != 0:
-            return (
-                self.initial_phi_grid[0]
-                + expm1(self._constants * i / (self.n - 1) * self.real_length)
-                / expm1(self._constants * self.real_length)
-                * self._delta
-            )
+            try:
+                return (
+                    self.initial_phi_grid[0]
+                    + expm1(self._constants * i / (self.n - 1) * self.real_length)
+                    / expm1(self._constants * self.real_length)
+                    * self._delta
+                )
+            except OverflowError:
+                return float('inf')
         else:
             #Plain ol' diffusion
             return (
