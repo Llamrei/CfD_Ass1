@@ -34,16 +34,16 @@ for nodes in phi_grid:
 # Solve
 error = dict()
 time_taken = dict()
+solution = dict()
 for scheme in DifferencingScheme:
     error[scheme.name] = []
     time_taken[scheme.name] = []
     for nodes in systems:
         start = round(time.perf_counter_ns() / 1000)
-        solution = systems[nodes].solve_numerically(convection_scheme=scheme)
+        solution[nodes] = systems[nodes].solve_numerically(convection_scheme=scheme)
         end = round(time.perf_counter_ns() / 1000)
-        # set_trace()
         error[scheme.name] = error[scheme.name] + [
-            calc_error(systems[nodes].solve_analytically(), solution)
+            calc_error(systems[nodes].solve_analytically(), solution[nodes])
         ]
         time_taken[scheme.name] = time_taken[scheme.name] + [end - start]
 
@@ -55,12 +55,24 @@ ax2 = ax1.twinx()
 ax2.set_ylabel("Time taken, μs")
 for scheme in DifferencingScheme:
     ax1.plot(node_range, error[scheme.name], label=scheme.name)
-    ax2.plot(node_range, time_taken[scheme.name], 'x',label=scheme.name, markersize = 4)
-plt.legend(loc="best")
+    ax2.plot(
+        node_range,
+        time_taken[scheme.name],
+        # "x",
+        # label=scheme.name,
+        # markersize=4,
+        alpha=0.5,
+    )
+ax1.legend()
 plt.title(
-    u"Variation of error with number of nodes\nU = {},  Γ = {}, ρ = {}".format(
+    u"U = {},  Γ = {}, ρ = {}".format(
         scalars.velocity, scalars.diffusion_coefficient, scalars.density
     )
 )
 plt.show()
-
+plt.savefig(
+    "../grid_analysis_U{}.png".format(scalars.velocity),
+    bbox_inches="tight",
+    pad_inches=0.02,
+    dpi=150,
+)
