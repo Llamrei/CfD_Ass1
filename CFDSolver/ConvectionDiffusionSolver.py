@@ -3,7 +3,7 @@ from enum import Enum
 from CFDSolver.Tools import solveTDM
 
 """
-
+ssdjhgfgkguy
 askfjhsgkyfubs 
 Future work:
 Implement for solving of velocities also
